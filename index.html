@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ruta Erasmus · Organizador de viajes</title>
+  <meta name="description" content="Organiza tus viajes de Erasmus y de frecuentación: itinerarios, mapa, presupuesto y gastos compartidos.">
+  <meta name="theme-color" content="#800020">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23800020'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle' fill='%23F5F0EB' font-family='serif'%3ER%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="#dashboard" data-tab-link="dashboard">Ruta Erasmus</a>
+      <p class="topbar__status" id="topbarStatus">Sin viaje activo</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Secciones de la aplicación">
+      <button class="tab is-active" role="tab" id="tab-dashboard" aria-controls="panel-dashboard" aria-selected="true" data-tab="dashboard">Inicio</button>
+      <button class="tab" role="tab" id="tab-planner" aria-controls="panel-planner" aria-selected="false" data-tab="planner" tabindex="-1">Itinerario</button>
+      <button class="tab" role="tab" id="tab-map" aria-controls="panel-map" aria-selected="false" data-tab="map" tabindex="-1">Mapa</button>
+      <button class="tab" role="tab" id="tab-community" aria-controls="panel-community" aria-selected="false" data-tab="community" tabindex="-1">Comunidad</button>
+      <button class="tab" role="tab" id="tab-assistant" aria-controls="panel-assistant" aria-selected="false" data-tab="assistant" tabindex="-1">Asistente</button>
+      <button class="tab" role="tab" id="tab-expenses" aria-controls="panel-expenses" aria-selected="false" data-tab="expenses" tabindex="-1">Gastos</button>
+    </nav>
+  </header>
+
+  <main class="content">
+
+    <!-- 1. INICIO -->
+    <section class="panel is-active" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+      <div class="grid grid--hero">
+        <article class="card card--accent" aria-live="polite">
+          <h2 class="card__title" id="countdownTitle">Próximo viaje</h2>
+          <p class="muted" id="countdownDest">Crea un viaje para empezar la cuenta atrás.</p>
+          <div class="countdown" id="countdown">
+            <div class="countdown__unit"><span id="cdDays">0</span><small>días</small></div>
+            <div class="countdown__unit"><span id="cdHours">00</span><small>horas</small></div>
+            <div class="countdown__unit"><span id="cdMinutes">00</span><small>min</small></div>
+            <div class="countdown__unit"><span id="cdSeconds">00</span><small>seg</small></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Viaje activo</h2>
+            <span class="badge" id="activeBadge">Inactivo</span>
+          </div>
+          <dl class="facts">
+            <div><dt>Destino</dt><dd id="activeDest">—</dd></div>
+            <div><dt>Transporte</dt><dd id="activeTransport">—</dd></div>
+            <div><dt>Trayecto restante</dt><dd id="activeRemaining">—</dd></div>
+            <div><dt>Fechas</dt><dd id="activeDates">—</dd></div>
+          </dl>
+          <div class="progress" aria-hidden="true"><div class="progress__bar" id="activeProgress"></div></div>
+        </article>
+      </div>
+
+      <div class="grid grid--two">
+        <article class="card">
+          <h2 class="card__title">Nuevo viaje</h2>
+          <form id="tripForm" class="form" autocomplete="off">
+            <label>Nombre del viaje
+              <input type="text" id="tripName" placeholder="Fin de semana en Lisboa" required>
+            </label>
+            <div class="form__row">
+              <label>Tipo
+                <select id="tripType">
+                  <option value="erasmus">Erasmus</option>
+                  <option value="frecuentacion">Frecuentación</option>
+                </select>
+              </label>
+              <label>Transporte
+                <select id="tripTransport">
+                  <option value="Avión">Avión</option>
+                  <option value="Tren">Tren</option>
+                  <option value="Autobús">Autobús</option>
+                  <option value="Coche">Coche</option>
+                  <option value="Barco">Barco</option>
+                </select>
+              </label>
+            </div>
+            <div class="form__row">
+              <label>Origen
+                <input type="text" id="tripOrigin" placeholder="Białystok" required>
+              </label>
+              <label>Destino
+                <input type="text" id="tripDestination" placeholder="Lisboa" required>
+              </label>
+            </div>
+            <div class="form__row">
+              <label>Salida
+                <input type="datetime-local" id="tripStart" required>
+              </label>
+              <label>Llegada al destino
+                <input type="datetime-local" id="tripArrival" required>
+              </label>
+            </div>
+            <label>Regreso
+              <input type="datetime-local" id="tripEnd" required>
+            </label>
+            <button type="submit" class="btn btn--primary">Guardar viaje</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Mis viajes</h2>
+            <select id="tripSelect" aria-label="Viaje seleccionado"></select>
+          </div>
+          <ul class="list" id="tripList">
+            <li class="empty">Aún no hay viajes guardados.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. ITINERARIO Y PRESUPUESTO -->
+    <section class="panel" id="panel-planner" role="tabpanel" aria-labelledby="tab-planner" hidden>
+      <div class="grid grid--two">
+        <article class="card">
+          <h2 class="card__title">Añadir actividad</h2>
+          <form id="planForm" class="form" autocomplete="off">
+            <div class="form__row">
+              <label>Día
+                <input type="date" id="planDate" required>
+              </label>
+              <label>Hora
+                <input type="time" id="planTime" required>
+              </label>
+            </div>
+            <div class="form__row">
+              <label>Categoría
+                <select id="planCategory">
+                  <option value="ver">Qué ver</option>
+                  <option value="comer">Comer</option>
+                  <option value="transporte">Transporte</option>
+                  <option value="alojamiento">Alojamiento</option>
+                  <option value="recordatorio">Recordatorio</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </label>
+              <label>Coste estimado (€)
+                <input type="number" id="planCost" min="0" step="0.01" value="0">
+              </label>
+            </div>
+            <label>Título
+              <input type="text" id="planTitle" placeholder="Visita a la Torre de Belém" required>
+            </label>
+            <label>Notas
+              <textarea id="planNotes" rows="2" placeholder="Reserva, dirección, enlace…"></textarea>
+            </label>
+            <button type="submit" class="btn btn--primary">Añadir al itinerario</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <h2 class="card__title">Presupuesto por categoría</h2>
+          <div class="form__row">
+            <label>Presupuesto total (€)
+              <input type="number" id="budgetTotal" min="0" step="1" value="0">
+            </label>
+            <div class="budget-sum">
+              <span class="muted">Gasto previsto</span>
+              <strong id="budgetSpent">0,00 €</strong>
+            </div>
+          </div>
+          <div class="progress"><div class="progress__bar" id="budgetProgress"></div></div>
+          <ul class="list" id="budgetList">
+            <li class="empty">Añade actividades con coste para ver el desglose.</li>
+          </ul>
+        </article>
+      </div>
+
+      <article class="card">
+        <div class="card__head">
+          <h2 class="card__title">Itinerario hora por hora</h2>
+          <div class="chips" id="dayChips" role="group" aria-label="Filtrar por día"></div>
+        </div>
+        <ol class="timeline" id="timeline">
+          <li class="empty">El itinerario está vacío. Añade tu primera actividad.</li>
+        </ol>
+      </article>
+    </section>
+
+    <!-- 3. MAPA Y ESTADÍSTICAS -->
+    <section class="panel" id="panel-map" role="tabpanel" aria-labelledby="tab-map" hidden>
+      <div class="grid grid--map">
+        <article class="card card--map">
+          <div class="card__head">
+            <h2 class="card__title">Mapa mundial</h2>
+            <div class="segmented" role="group" aria-label="Modo de vista del mapa">
+              <button type="button" class="segmented__btn is-active" data-mapview="visited" aria-pressed="true">Visitados</button>
+              <button type="button" class="segmented__btn" data-mapview="wishlist" aria-pressed="false">Deseos</button>
+            </div>
+          </div>
+          <div id="worldMap" class="map" role="application" aria-label="Mapa interactivo"></div>
+        </article>
+
+        <aside class="stack">
+          <article class="card">
+            <h2 class="card__title">Estadísticas</h2>
+            <div class="stat">
+              <span class="stat__value" id="statCountries">0 %</span>
+              <span class="muted" id="statCountriesDetail">0 de 195 países</span>
+              <div class="progress"><div class="progress__bar" id="statCountriesBar"></div></div>
+            </div>
+            <div class="stat">
+              <span class="stat__value" id="statContinents">0 %</span>
+              <span class="muted" id="statContinentsDetail">0 de 7 continentes</span>
+              <div class="progress"><div class="progress__bar" id="statContinentsBar"></div></div>
+            </div>
+            <div class="stat">
+              <span class="stat__value" id="statCities">0</span>
+              <span class="muted">ciudades registradas</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2 class="card__title">Añadir lugar</h2>
+            <form id="placeForm" class="form" autocomplete="off">
+              <label>Ciudad o lugar
+                <input type="text" id="placeName" placeholder="Praga" required>
+              </label>
+              <div class="form__row">
+                <label>País
+                  <input type="text" id="placeCountry" placeholder="República Checa" required>
+                </label>
+                <label>Continente
+                  <select id="placeContinent">
+                    <option>Europa</option>
+                    <option>Asia</option>
+                    <option>África</option>
+                    <option>América del Norte</option>
+                    <option>América del Sur</option>
+                    <option>Oceanía</option>
+                    <option>Antártida</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form__row">
+                <label>Latitud
+                  <input type="number" id="placeLat" step="any" min="-90" max="90" placeholder="50.0755" required>
+                </label>
+                <label>Longitud
+                  <input type="number" id="placeLng" step="any" min="-180" max="180" placeholder="14.4378" required>
+                </label>
+              </div>
+              <label>Estado
+                <select id="placeStatus">
+                  <option value="visited">Visitado</option>
+                  <option value="wishlist">Por visitar</option>
+                </select>
+              </label>
+              <button type="submit" class="btn btn--primary">Guardar lugar</button>
+            </form>
+          </article>
+        </aside>
+      </div>
+
+      <article class="card">
+        <h2 class="card__title">Mis lugares</h2>
+        <ul class="list" id="placeList">
+          <li class="empty">Todavía no has añadido lugares.</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- 4. COMUNIDAD -->
+    <section class="panel" id="panel-community" role="tabpanel" aria-labelledby="tab-community" hidden>
+      <div class="grid grid--two">
+        <article class="card">
+          <h2 class="card__title">Recomendar un lugar</h2>
+          <form id="recoForm" class="form" autocomplete="off">
+            <label>Lugar
+              <input type="text" id="recoPlace" placeholder="Café Brasileira" required>
+            </label>
+            <div class="form__row">
+              <label>Ciudad
+                <input type="text" id="recoCity" placeholder="Lisboa" required>
+              </label>
+              <label>País
+                <input type="text" id="recoCountry" placeholder="Portugal" required>
+              </label>
+            </div>
+            <div class="form__row">
+              <label>Categoría
+                <select id="recoCategory">
+                  <option value="comer">Comer y beber</option>
+                  <option value="ver">Qué ver</option>
+                  <option value="ocio">Ocio y noche</option>
+                  <option value="naturaleza">Naturaleza</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </label>
+              <label>Valoración
+                <select id="recoRating">
+                  <option value="5">5 · Imprescindible</option>
+                  <option value="4">4 · Muy bueno</option>
+                  <option value="3">3 · Correcto</option>
+                  <option value="2">2 · Mejorable</option>
+                  <option value="1">1 · No lo recomiendo</option>
+                </select>
+              </label>
+            </div>
+            <label>Tu nombre
+              <input type="text" id="recoAuthor" placeholder="Nombre o alias" required>
+            </label>
+            <label>Comentario
+              <textarea id="recoComment" rows="3" placeholder="Por qué lo recomiendas" required></textarea>
+            </label>
+            <button type="submit" class="btn btn--primary">Publicar recomendación</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <div class="card__head">
+            <h2 class="card__title">Recomendaciones</h2>
+            <input type="search" id="recoFilter" placeholder="Filtrar por ciudad o país" aria-label="Filtrar recomendaciones">
+          </div>
+          <p class="notice" id="dbNotice">Modo local: las recomendaciones se guardan solo en este navegador. La conexión con Supabase o Firebase se activa en la configuración de <code>app.js</code>.</p>
+          <ul class="list" id="recoList">
+            <li class="empty">Aún no hay recomendaciones.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- 5. ASISTENTE -->
+    <section class="panel" id="panel-assistant" role="tabpanel" aria-labelledby="tab-assistant" hidden>
+      <div class="grid grid--two">
+        <article class="card">
+          <h2 class="card__title">Qué ponerte en la maleta</h2>
+          <form id="clothesForm" class="form" autocomplete="off">
+            <label>Ciudad de destino
+              <input type="text" id="clothesCity" placeholder="Lisboa" required>
+            </label>
+            <div class="form__row">
+              <label>Mes de viaje
+                <select id="clothesMonth"></select>
+              </label>
+              <label>Duración (días)
+                <input type="number" id="clothesDays" min="1" max="60" value="3">
+              </label>
+            </div>
+            <button type="submit" class="btn btn--primary">Ver previsión y sugerencias</button>
+          </form>
+          <div class="weather" id="weatherBox" aria-live="polite">
+            <p class="muted">Introduce un destino para consultar el clima.</p>
+          </div>
+          <ul class="list list--chips" id="clothesList"></ul>
+        </article>
+
+        <article class="card">
+          <h2 class="card__title">Buscar vuelos baratos</h2>
+          <form id="flightForm" class="form" autocomplete="off">
+            <div class="form__row">
+              <label>Origen
+                <input type="text" id="flightFrom" placeholder="Varsovia" required>
+              </label>
+              <label>Destino
+                <input type="text" id="flightTo" placeholder="Lisboa" required>
+              </label>
+            </div>
+            <div class="form__row">
+              <label>Mes
+                <select id="flightMonth"></select>
+              </label>
+              <label>Año
+                <select id="flightYear"></select>
+              </label>
+            </div>
+            <div class="form__actions">
+              <a class="btn btn--primary" id="linkSkyscanner" href="https://www.skyscanner.es/" target="_blank" rel="noopener noreferrer">Skyscanner</a>
+              <a class="btn btn--ghost" id="linkGoogleFlights" href="https://www.google.com/travel/flights" target="_blank" rel="noopener noreferrer">Google Flights</a>
+              <a class="btn btn--ghost" id="linkCheapestMonth" href="https://www.skyscanner.es/" target="_blank" rel="noopener noreferrer">Mes más barato</a>
+            </div>
+          </form>
+          <p class="muted small">Los enlaces se actualizan con tus datos y se abren en una pestaña nueva.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 6. GASTOS COMPARTIDOS -->
+    <section class="panel" id="panel-expenses" role="tabpanel" aria-labelledby="tab-expenses" hidden>
+      <div class="grid grid--two">
+        <article class="card">
+          <h2 class="card__title">Compañeros de viaje</h2>
+          <form id="memberForm" class="form form--inline" autocomplete="off">
+            <label class="grow">Nombre
+              <input type="text" id="memberName" placeholder="Marta" required>
+            </label>
+            <button type="submit" class="btn btn--primary">Añadir</button>
+          </form>
+          <ul class="list list--chips" id="memberList">
+            <li class="empty">Añade al menos dos personas.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2 class="card__title">Nuevo gasto</h2>
+          <form id="expenseForm" class="form" autocomplete="off">
+            <label>Concepto
+              <input type="text" id="expenseTitle" placeholder="Cena en el Bairro Alto" required>
+            </label>
+            <div class="form__row">
+              <label>Importe (€)
+                <input type="number" id="expenseAmount" min="0.01" step="0.01" required>
+              </label>
+              <label>Pagó
+                <select id="expensePayer" required></select>
+              </label>
+            </div>
+            <fieldset class="fieldset">
+              <legend>Se reparte entre</legend>
+              <div id="expenseSplit" class="checks"></div>
+            </fieldset>
+            <button type="submit" class="btn btn--primary">Registrar gasto</button>
+          </form>
+        </article>
+      </div>
+
+      <div class="grid grid--two">
+        <article class="card">
+          <h2 class="card__title">Balance</h2>
+          <ul class="list" id="balanceList">
+            <li class="empty">Sin gastos registrados.</li>
+          </ul>
+          <h3 class="card__subtitle">Cómo saldar las cuentas</h3>
+          <ul class="list" id="settleList">
+            <li class="empty">No hay pagos pendientes.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2 class="card__title">Historial de gastos</h2>
+          <ul class="list" id="expenseList">
+            <li class="empty">Aún no hay gastos.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Ruta Erasmus · Tus datos se guardan en este navegador.</p>
+    <button type="button" class="link-btn" id="exportData">Exportar copia</button>
+    <button type="button" class="link-btn" id="importData">Importar copia</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+    (function () {
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+      var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+
+      function showTab(name, focus) {
+        tabs.forEach(function (tab) {
+          var active = tab.dataset.tab === name;
+          tab.classList.toggle('is-active', active);
+          tab.setAttribute('aria-selected', active ? 'true' : 'false');
+          tab.tabIndex = active ? 0 : -1;
+          if (active && focus) { tab.focus(); }
+        });
+        panels.forEach(function (panel) {
+          var active = panel.id === 'panel-' + name;
+          panel.classList.toggle('is-active', active);
+          panel.hidden = !active;
+        });
+        history.replaceState(null, '', '#' + name);
+        document.dispatchEvent(new CustomEvent('tabchange', { detail: { tab: name } }));
+      }
+
+      tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () { showTab(tab.dataset.tab, false); });
+        tab.addEventListener('keydown', function (event) {
+          var next = null;
+          if (event.key === 'ArrowRight') { next = tabs[(index + 1) % tabs.length]; }
+          if (event.key === 'ArrowLeft') { next = tabs[(index - 1 + tabs.length) % tabs.length]; }
+          if (event.key === 'Home') { next = tabs[0]; }
+          if (event.key === 'End') { next = tabs[tabs.length - 1]; }
+          if (next) { event.preventDefault(); showTab(next.dataset.tab, true); }
+        });
+      });
+
+      document.querySelectorAll('[data-tab-link]').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          showTab(link.dataset.tabLink, false);
+        });
+      });
+
+      var initial = location.hash.replace('#', '');
+      if (initial && document.getElementById('panel-' + initial)) { showTab(initial, false); }
+    })();
+  </script>
+  <script src="app.js" defer></script>
+</body>
+</html>
