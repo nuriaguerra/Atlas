@@ -55,7 +55,7 @@ erasmus-travel/
 2. Ve a **Settings → Pages**.
 3. En **Build and deployment**, elige **Deploy from a branch**.
 4. Selecciona la rama `main` y la carpeta `/ (root)`, y pulsa **Save**.
-5. Espera uno o dos minutos. La web quedará en `https://TU-USUARIO.github.io/NOMBRE-DEL-REPO/`.
+5. Espera uno o dos minutos. La web quedará en `https://nuriaguerra.github.io/Atlas/`.
 
 ## Datos y privacidad
  
