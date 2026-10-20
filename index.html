@@ -459,51 +459,10 @@
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <script>
-    (function () {
-      var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
-      var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
-
-      function showTab(name, focus) {
-        tabs.forEach(function (tab) {
-          var active = tab.dataset.tab === name;
-          tab.classList.toggle('is-active', active);
-          tab.setAttribute('aria-selected', active ? 'true' : 'false');
-          tab.tabIndex = active ? 0 : -1;
-          if (active && focus) { tab.focus(); }
-        });
-        panels.forEach(function (panel) {
-          var active = panel.id === 'panel-' + name;
-          panel.classList.toggle('is-active', active);
-          panel.hidden = !active;
-        });
-        history.replaceState(null, '', '#' + name);
-        document.dispatchEvent(new CustomEvent('tabchange', { detail: { tab: name } }));
-      }
-
-      tabs.forEach(function (tab, index) {
-        tab.addEventListener('click', function () { showTab(tab.dataset.tab, false); });
-        tab.addEventListener('keydown', function (event) {
-          var next = null;
-          if (event.key === 'ArrowRight') { next = tabs[(index + 1) % tabs.length]; }
-          if (event.key === 'ArrowLeft') { next = tabs[(index - 1 + tabs.length) % tabs.length]; }
-          if (event.key === 'Home') { next = tabs[0]; }
-          if (event.key === 'End') { next = tabs[tabs.length - 1]; }
-          if (next) { event.preventDefault(); showTab(next.dataset.tab, true); }
-        });
-      });
-
-      document.querySelectorAll('[data-tab-link]').forEach(function (link) {
-        link.addEventListener('click', function (event) {
-          event.preventDefault();
-          showTab(link.dataset.tabLink, false);
-        });
-      });
-
-      var initial = location.hash.replace('#', '');
-      if (initial && document.getElementById('panel-' + initial)) { showTab(initial, false); }
-    })();
-  </script>
   <script src="app.js" defer></script>
+  <script src="js/map.js" defer></script>
+  <script src="js/planner.js" defer></script>
+  <script src="js/expenses.js" defer></script>
+  <script src="js/community.js" defer></script>
 </body>
 </html>
